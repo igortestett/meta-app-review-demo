@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Páginas Públicas - Meta App Review</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        #login-screen h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        #login-screen p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* --- Dashboard --- */
+        #dashboard {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Status Banner */
+        #status-banner {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-loading { background-color: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+        .status-success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .status-error { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .status-warning { background-color: var(--warning-bg); color: var(--warning-text); border: 1px solid #fde68a; }
+
+        .mock-badge {
+            background-color: var(--error);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Info Sections */
+        .info-list {
+            list-style: none;
+        }
+        
+        .info-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .info-list li::before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .disclaimer-box {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1rem;
+        }
+
+        /* Analysis Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Posts */
+        .post-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .post-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .post-date {
+            font-weight: 500;
+            background-color: #f1f5f9;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .post-content {
+            font-size: 1rem;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .post-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-top: 1px solid var(--border);
+            padding-top: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .metric {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            background-color: #f8fafc;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .metric svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .post-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .post-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login/Intro Screen -->
+    <div id="login-screen">
+        <h1>Monitor de Páginas Públicas</h1>
+        <p>Demonstração para App Review da Meta.<br>Esta ferramenta acessa dados públicos de páginas usando o recurso <strong>"Page Public Content Access"</strong>.</p>
+        <button class="btn" onclick="enterDashboard()">Entrar no Painel</button>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="container">
+        <header>
+            <h1>Painel de Análise <span id="mock-badge" class="mock-badge" style="display: none;">DADOS DEMO / MOCK</span></h1>
+            <p>Ferramenta de monitoramento e análise de conteúdo e engajamento público de páginas do Facebook.</p>
+        </header>
+
+        <div class="grid">
+            <!-- Sidebar: Instructions & Data Usage -->
+            <div class="sidebar">
+                <div class="card highlight-card" style="border-left: 4px solid var(--primary); background-color: #eff6ff;">
+                    <h2 style="color: var(--primary);">Instruções para reviewer da Meta</h2>
+                    <p style="font-size: 0.9rem; margin-bottom: 1rem;"><strong>Objetivo:</strong> Este app demonstra o uso da feature <strong>“Page Public Content Access”</strong>. A funcionalidade principal do app é buscar, exibir e analisar posts públicos de páginas.</p>
+                    
+                    <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Passos para teste:</h3>
+                    <ol class="info-list" style="padding-left: 0; margin-bottom: 1rem;">
+                        <li>Clique em “Entrar no painel”.</li>
+                        <li>Na tela principal, insira um Access Token válido no campo correspondente.</li>
+                        <li>Informe o ID ou username de uma página pública do Facebook.</li>
+                        <li>Clique em “Buscar posts públicos”.</li>
+                        <li>Verifique a listagem de posts públicos retornados.</li>
+                        <li>Verifique a seção “Análise”, que resume a atividade pública da página.</li>
+                        <li>Caso a API não retorne dados no ambiente de demonstração, visualize a seção de resultados demonstrativos com dados fictícios claramente rotulados como “DEMO”.</li>
+                    </ol>
+
+                    <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Credenciais / observações para teste:</h3>
+                    <ul class="info-list" style="padding-left: 0; margin-bottom: 1rem; background-color: #ffffff; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <li style="margin-bottom: 0.5rem;"><strong>URL do app:</strong> <em>[Insira a URL aqui]</em></li>
+                        <li style="margin-bottom: 0.5rem;"><strong>Usuário de teste:</strong> <em>[Insira o usuário aqui]</em></li>
+                        <li style="margin-bottom: 0.5rem;"><strong>Senha de teste:</strong> <em>[Insira a senha aqui]</em></li>
+                        <li style="margin-bottom: 0;"><strong>Observações:</strong> <em>[Insira outras observações aqui, se houver]</em></li>
+                    </ul>
+
+                    <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid #bfdbfe; padding-top: 1rem;">
+                        “Este aplicativo usa dados públicos de páginas do Facebook para exibir e analisar posts e engajamento públicos, em conformidade com o uso permitido da feature solicitada.”
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Como este app usa os dados</h2>
+                    <div class="disclaimer-box">
+                        <strong>Atenção:</strong> Este aplicativo usa dados públicos de páginas do Facebook para analisar e/ou exibir posts e engajamento públicos.
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">
+                        O objetivo principal é agregar conteúdo público para monitoramento, extraindo texto do post, data de criação e métricas agregadas (reações, comentários e compartilhamentos), provendo insights analíticos sobre a página.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h2>Dados Utilizados da API</h2>
+                    <ul class="info-list">
+                        <li><code>id</code> da Página/Post</li>
+                        <li><code>message</code> (Texto do post)</li>
+                        <li><code>created_time</code> (Data de publicação)</li>
+                        <li><code>permalink_url</code> (Link do post)</li>
+                        <li>Métricas de Engajamento: <code>reactions</code>, <code>comments</code>, <code>shares</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <!-- Inputs Form -->
+                <div class="card">
+                    <h2>Consulta de Dados Públicos</h2>
+                    <div class="form-group">
+                        <label for="access-token">Access Token</label>
+                        <input type="text" id="access-token" placeholder="Insira seu token da Graph API aqui">
+                    </div>
+                    <div class="form-group">
+                        <label for="page-id">Page ID ou Username</label>
+                        <input type="text" id="page-id" placeholder="Ex: Meta, 106362826046036">
+                    </div>
+                    <div class="button-group">
+                        <button class="btn" onclick="fetchPosts()">Buscar posts públicos</button>
+                        <button class="btn btn-secondary" onclick="clearData()">Limpar</button>
+                    </div>
+                </div>
+
+                <!-- Status Banner -->
+                <div id="status-banner"></div>
+
+                <!-- Analysis Area -->
+                <div class="card" id="analysis-area" style="display: none;">
+                    <h2>Análise da Página</h2>
+                    <div class="disclaimer-box" style="margin-bottom: 1.5rem; font-size: 0.9rem; border-color: var(--success);">
+                        <strong>Resumo da operação:</strong> O app processou os dados brutos retornados da API para extrair o volume de postagens recentes, calcular a frequência de publicação e apresentar um panorama geral da atividade pública da página.
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="stat-total">0</div>
+                            <div class="stat-label">Posts Retornados</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="stat-recent">-</div>
+                            <div class="stat-label">Data do Post Mais Recente</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="stat-freq">-</div>
+                            <div class="stat-label">Frequência Estimada</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Posts List -->
+                <div class="card">
+                    <h2>Posts Públicos Retornados</h2>
+                    <div id="posts-container">
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            <p>Nenhum dado buscado ainda. Insira as credenciais acima e clique em buscar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração da API - Variável no topo para facilitar alteração
+        const API_VERSION = 'v19.0';
+        
+        // Elementos da UI
+        const loginScreen = document.getElementById('login-screen');
+        const dashboard = document.getElementById('dashboard');
+        const statusBanner = document.getElementById('status-banner');
+        const postsContainer = document.getElementById('posts-container');
+        const analysisArea = document.getElementById('analysis-area');
+        const mockBadge = document.getElementById('mock-badge');
+
+        // Função de Navegação
+        function enterDashboard() {
+            loginScreen.style.display = 'none';
+            dashboard.style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        // Função de Feedback Visual
+        function showStatus(message, type) {
+            statusBanner.style.display = 'block';
+            statusBanner.className = `status-${type}`;
+            statusBanner.textContent = message;
+        }
+
+        // Função para Limpar Interface
+        function clearData() {
+            document.getElementById('access-token').value = '';
+            document.getElementById('page-id').value = '';
+            statusBanner.style.display = 'none';
+            mockBadge.style.display = 'none';
+            analysisArea.style.display = 'none';
+            postsContainer.innerHTML = `
+                <div class="empty-state">
+                    <p>Interface limpa. Insira novos dados para realizar uma nova busca.</p>
+                </div>
+            `;
+        }
+
+        // Função Principal de Busca na API
+        async function fetchPosts() {
+            const token = document.getElementById('access-token').value.trim();
+            const pageId = document.getElementById('page-id').value.trim();
+            
+            if (!token || !pageId) {
+                showStatus('Erro: É necessário preencher o Access Token e o Page ID.', 'error');
+                return;
+            }
+
+            showStatus('Conectando à Graph API e buscando dados...', 'loading');
+            mockBadge.style.display = 'none';
+
+            // Montando URL do Endpoint conforme documentação da Meta
+            const url = `https://graph.facebook.com/${API_VERSION}/${pageId}/posts?fields=id,message,created_time,permalink_url,shares,comments.summary(total_count).limit(0),reactions.summary(total_count).limit(0)&access_token=${token}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    showStatus(`Erro retornado pela API: ${data.error.message} (Código: ${data.error.code})`, 'error');
+                    
+                    // Em caso de falha de permissão/token no screencast, renderiza dados mock para não travar a gravação
+                    renderMockDataFallback(pageId); 
+                } else {
+                    showStatus(`Sucesso: Dados públicos da página carregados corretamente via API.`, 'success');
+                    processAndRenderData(data.data, pageId);
+                }
+            } catch (err) {
+                console.error('Fetch Error:', err);
+                showStatus('Erro de rede ao conectar à Graph API. Verifique sua conexão.', 'error');
+                renderMockDataFallback(pageId);
+            }
+        }
+
+        // Função para Processar Dados (Reais ou Mock) e Atualizar UI
+        function processAndRenderData(posts, identifier) {
+            if (!posts || posts.length === 0) {
+                analysisArea.style.display = 'none';
+                postsContainer.innerHTML = '<p style="padding: 1rem; color: #64748b;">A API retornou sucesso, mas nenhum post público foi encontrado para esta página.</p>';
+                return;
+            }
+
+            // 1. Renderiza a Análise de Dados
+            analysisArea.style.display = 'block';
+            document.getElementById('stat-total').textContent = posts.length;
+            
+            const firstDate = new Date(posts[0].created_time);
+            document.getElementById('stat-recent').textContent = firstDate.toLocaleDateString('pt-BR');
+
+            if (posts.length > 1) {
+                const lastDate = new Date(posts[posts.length - 1].created_time);
+                const diffTime = Math.abs(firstDate - lastDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const freq = (posts.length / (diffDays || 1)).toFixed(1);
+                document.getElementById('stat-freq').textContent = `~${freq} post(s) / dia`;
+            } else {
+                document.getElementById('stat-freq').textContent = 'N/A';
+            }
+
+            // 2. Renderiza a Lista de Posts
+            postsContainer.innerHTML = '';
+            posts.forEach(post => {
+                const dateObj = new Date(post.created_time);
+                const formattedDate = dateObj.toLocaleDateString('pt-BR') + ' às ' + dateObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                
+                const message = post.message ? escapeHTML(post.message) : '<em>(Post contendo apenas mídia ou sem texto)</em>';
+                
+                // Extraindo métricas públicas da API
+                const reactions = post.reactions?.summary?.total_count || 0;
+                const comments = post.comments?.summary?.total_count || 0;
+                const shares = post.shares?.count || 0;
+
+                const postHTML = `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <span><strong>Post ID:</strong> ${post.id}</span>
+                            <span class="post-date">${formattedDate}</span>
+                        </div>
+                        <div class="post-content">${message}</div>
+                        
+                        <div class="post-metrics">
+                            <div class="metric">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg>
+                                <strong>${reactions}</strong> Reações
+                            </div>
+                            <div class="metric">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                <strong>${comments}</strong> Comentários
+                            </div>
+                            <div class="metric">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                                <strong>${shares}</strong> Compartilhamentos
+                            </div>
+                        </div>
+
+                        ${post.permalink_url ? `<a href="${post.permalink_url}" target="_blank" class="post-link">Acessar Post Original no Facebook <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : ''}
+                    </div>
+                `;
+                postsContainer.insertAdjacentHTML('beforeend', postHTML);
+            });
+        }
+
+        // Função utilitária para evitar XSS
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag])
+            );
+        }
+
+        // Função de Fallback para Demonstração Contínua em Vídeo
+        function renderMockDataFallback(identifier) {
+            showStatus('Atenção: A requisição à API falhou. Exibindo dados visuais de demonstração (Mock Data) para não interromper a gravação do fluxo de App Review.', 'warning');
+            mockBadge.style.display = 'inline-block';
+
+            const now = new Date();
+            const mockPosts = [
+                {
+                    id: `${identifier}_987654321`,
+                    message: `Este é um post público de demonstração.\n\nO objetivo deste aplicativo é utilizar a permissão "Page Public Content Access" para extrair e exibir informações públicas de páginas do Facebook. O app consome dados estruturados para realizar a análise que você vê acima.\n\n#AppReview #Demonstração`,
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(), // 2 horas atrás
+                    permalink_url: "https://facebook.com",
+                    reactions: { summary: { total_count: 342 } },
+                    comments: { summary: { total_count: 56 } },
+                    shares: { count: 12 }
+                },
+                {
+                    id: `${identifier}_123456789`,
+                    message: `Lançamento de um novo relatório de tendências de mercado. Acesse nosso portal para ler mais detalhes e compartilhe sua opinião nos comentários!\n\nAgradecemos a todos que acompanham nossas publicações.`,
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 dias atrás
+                    permalink_url: "https://facebook.com",
+                    reactions: { summary: { total_count: 1205 } },
+                    comments: { summary: { total_count: 140 } },
+                    shares: { count: 89 }
+                },
+                {
+                    id: `${identifier}_456123789`,
+                    message: null, // Simulando um post que seja apenas uma foto ou vídeo sem legenda
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 4).toISOString(), // 4 dias atrás
+                    permalink_url: "https://facebook.com",
+                    reactions: { summary: { total_count: 85 } },
+                    comments: { summary: { total_count: 4 } },
+                    shares: { count: 1 }
+                }
+            ];
+
+            processAndRenderData(mockPosts, identifier);
+        }
+    </script>
+</body>
+</html>
