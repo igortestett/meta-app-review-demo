@@ -569,7 +569,13 @@
             const pageId = document.getElementById('page-id').value.trim();
             
             if (!token || !pageId) {
-                showStatus('Erro: É necessário preencher o Access Token e o Page ID.', 'error');
+                statusBanner.style.display = 'block';
+                statusBanner.className = 'status-error';
+                statusBanner.innerHTML = `
+                    <div style="margin-bottom: 0.5rem;"><strong>Erro:</strong> É necessário preencher o Access Token e o Page ID para buscar dados reais.</div>
+                    <div style="font-size: 0.9rem; margin-bottom: 0.75rem;">Para avaliar a interface sem credenciais, carregue os resultados fictícios.</div>
+                    <button class="btn" style="background-color: #991b1b; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderMockDataFallback('1092837465')">Ver demonstração</button>
+                `;
                 return;
             }
 
@@ -593,7 +599,7 @@
                     statusBanner.innerHTML = `
                         <div style="margin-bottom: 0.5rem;"><strong>Erro retornado pela API:</strong> ${data.error.message} (Código: ${data.error.code})</div>
                         <div style="font-size: 0.9rem; margin-bottom: 0.75rem;">Para prosseguir com o App Review e avaliar a interface, você pode carregar uma simulação.</div>
-                        <button class="btn" style="background-color: #991b1b; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderMockDataFallback('${pageId}')">Carregar demonstração (DEMO)</button>
+                        <button class="btn" style="background-color: #991b1b; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderMockDataFallback('${pageId}')">Ver demonstração</button>
                     `;
                 } else {
                     showStatus(`Sucesso: Dados públicos da página carregados corretamente via API.`, 'success');
@@ -605,7 +611,7 @@
                 statusBanner.className = 'status-error';
                 statusBanner.innerHTML = `
                     <div style="margin-bottom: 0.5rem;"><strong>Erro de rede:</strong> Falha ao conectar à Graph API.</div>
-                    <button class="btn" style="background-color: #991b1b; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderMockDataFallback('${pageId}')">Carregar demonstração (DEMO)</button>
+                    <button class="btn" style="background-color: #991b1b; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderMockDataFallback('${pageId}')">Ver demonstração</button>
                 `;
             }
         }
