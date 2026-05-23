@@ -452,6 +452,35 @@
                 <!-- Status Banner -->
                 <div id="status-banner"></div>
 
+                <!-- Demo Mode Warning Area -->
+                <div id="demo-warning-area" style="display: none; background-color: var(--warning-bg); border-left: 4px solid var(--warning); padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem;">
+                    <strong style="color: var(--warning-text); display: block; font-size: 1.1rem; margin-bottom: 0.25rem;">⚠️ Modo Demonstração Ativo</strong>
+                    <p style="color: var(--warning-text); font-size: 0.95rem; margin: 0;">Os dados abaixo são demonstrativos e servem apenas para apresentar a experiência visual do aplicativo e seu uso planejado para os dados da API.</p>
+                </div>
+
+                <!-- Page Info Area -->
+                <div class="card" id="page-info-area" style="display: none;">
+                    <h2>Página Monitorada</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong style="display:block; color: var(--text-muted); font-size: 0.85rem;">Nome da Página</strong>
+                            <span id="page-info-name" style="font-weight: 500; font-size: 1.1rem;">-</span>
+                        </div>
+                        <div>
+                            <strong style="display:block; color: var(--text-muted); font-size: 0.85rem;">Identificador (ID)</strong>
+                            <span id="page-info-id">-</span>
+                        </div>
+                        <div>
+                            <strong style="display:block; color: var(--text-muted); font-size: 0.85rem;">Categoria</strong>
+                            <span id="page-info-category">-</span>
+                        </div>
+                        <div>
+                            <strong style="display:block; color: var(--text-muted); font-size: 0.85rem;">Última Coleta</strong>
+                            <span id="page-info-date">-</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Analysis Area -->
                 <div class="card" id="analysis-area" style="display: none;">
                     <h2>Análise da Página</h2>
@@ -470,6 +499,10 @@
                         <div class="stat-box">
                             <div class="stat-value" id="stat-freq">-</div>
                             <div class="stat-label">Frequência Estimada</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="stat-eng">-</div>
+                            <div class="stat-label">Média de Engajamento</div>
                         </div>
                     </div>
                 </div>
@@ -521,6 +554,8 @@
             statusBanner.style.display = 'none';
             mockBadge.style.display = 'none';
             analysisArea.style.display = 'none';
+            document.getElementById('page-info-area').style.display = 'none';
+            document.getElementById('demo-warning-area').style.display = 'none';
             postsContainer.innerHTML = `
                 <div class="empty-state">
                     <p>Interface limpa. Insira novos dados para realizar uma nova busca.</p>
@@ -538,8 +573,10 @@
                 return;
             }
 
+            statusBanner.innerHTML = 'Conectando à Graph API e buscando dados...';
             showStatus('Conectando à Graph API e buscando dados...', 'loading');
             mockBadge.style.display = 'none';
+            document.getElementById('demo-warning-area').style.display = 'none';
 
             // Montando URL do Endpoint conforme documentação da Meta
             const url = `https://graph.facebook.com/${API_VERSION}/${pageId}/posts?fields=id,message,created_time,permalink_url,shares,comments.summary(total_count).limit(0),reactions.summary(total_count).limit(0)&access_token=${token}`;
@@ -550,28 +587,44 @@
 
                 if (data.error) {
                     console.error('API Error:', data.error);
-                    showStatus(`Erro retornado pela API: ${data.error.message} (Código: ${data.error.code})`, 'error');
                     
-                    // Em caso de falha de permissão/token no screencast, renderiza dados mock para não travar a gravação
-                    renderMockDataFallback(pageId); 
+                    statusBanner.style.display = 'block';
+                    statusBanner.className = 'status-error';
+                    statusBanner.innerHTML = `
+                        <div style="margin-bottom: 0.5rem;"><strong>Erro retornado pela API:</strong> ${data.error.message} (Código: ${data.error.code})</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 0.75rem;">Para prosseguir com o App Review e avaliar a interface, você pode carregar uma simulação.</div>
+                        <button class="btn" style="background-color: #991b1b; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderMockDataFallback('${pageId}')">Carregar demonstração (DEMO)</button>
+                    `;
                 } else {
                     showStatus(`Sucesso: Dados públicos da página carregados corretamente via API.`, 'success');
-                    processAndRenderData(data.data, pageId);
+                    processAndRenderData(data.data, { id: pageId, name: pageId, category: 'Não informada' }, false);
                 }
             } catch (err) {
                 console.error('Fetch Error:', err);
-                showStatus('Erro de rede ao conectar à Graph API. Verifique sua conexão.', 'error');
-                renderMockDataFallback(pageId);
+                statusBanner.style.display = 'block';
+                statusBanner.className = 'status-error';
+                statusBanner.innerHTML = `
+                    <div style="margin-bottom: 0.5rem;"><strong>Erro de rede:</strong> Falha ao conectar à Graph API.</div>
+                    <button class="btn" style="background-color: #991b1b; padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="renderMockDataFallback('${pageId}')">Carregar demonstração (DEMO)</button>
+                `;
             }
         }
 
         // Função para Processar Dados (Reais ou Mock) e Atualizar UI
-        function processAndRenderData(posts, identifier) {
+        function processAndRenderData(posts, pageInfo, isDemo = false) {
             if (!posts || posts.length === 0) {
                 analysisArea.style.display = 'none';
+                document.getElementById('page-info-area').style.display = 'none';
                 postsContainer.innerHTML = '<p style="padding: 1rem; color: #64748b;">A API retornou sucesso, mas nenhum post público foi encontrado para esta página.</p>';
                 return;
             }
+
+            // 0. Renderiza Informações da Página
+            document.getElementById('page-info-area').style.display = 'block';
+            document.getElementById('page-info-name').textContent = pageInfo.name;
+            document.getElementById('page-info-id').textContent = pageInfo.id;
+            document.getElementById('page-info-category').textContent = pageInfo.category;
+            document.getElementById('page-info-date').textContent = new Date().toLocaleString('pt-BR');
 
             // 1. Renderiza a Análise de Dados
             analysisArea.style.display = 'block';
@@ -579,6 +632,8 @@
             
             const firstDate = new Date(posts[0].created_time);
             document.getElementById('stat-recent').textContent = firstDate.toLocaleDateString('pt-BR');
+
+            let totalEngagement = 0;
 
             if (posts.length > 1) {
                 const lastDate = new Date(posts[posts.length - 1].created_time);
@@ -602,6 +657,9 @@
                 const reactions = post.reactions?.summary?.total_count || 0;
                 const comments = post.comments?.summary?.total_count || 0;
                 const shares = post.shares?.count || 0;
+                
+                const postEng = reactions + comments + shares;
+                totalEngagement += postEng;
 
                 const postHTML = `
                     <div class="post-card">
@@ -631,6 +689,10 @@
                 `;
                 postsContainer.insertAdjacentHTML('beforeend', postHTML);
             });
+            
+            // Calculando média
+            const avgEng = (totalEngagement / posts.length).toFixed(0);
+            document.getElementById('stat-eng').textContent = `~${avgEng} interações`;
         }
 
         // Função utilitária para evitar XSS
@@ -648,41 +710,66 @@
 
         // Função de Fallback para Demonstração Contínua em Vídeo
         function renderMockDataFallback(identifier) {
-            showStatus('Atenção: A requisição à API falhou. Exibindo dados visuais de demonstração (Mock Data) para não interromper a gravação do fluxo de App Review.', 'warning');
+            showStatus('Resultados demonstrativos carregados com sucesso.', 'success');
             mockBadge.style.display = 'inline-block';
+            document.getElementById('demo-warning-area').style.display = 'block';
 
             const now = new Date();
+            const pageInfo = {
+                id: "1092837465",
+                name: "Página Exemplo Notícias",
+                category: "Notícias e Mídia"
+            };
+
             const mockPosts = [
                 {
-                    id: `${identifier}_987654321`,
-                    message: `Este é um post público de demonstração.\n\nO objetivo deste aplicativo é utilizar a permissão "Page Public Content Access" para extrair e exibir informações públicas de páginas do Facebook. O app consome dados estruturados para realizar a análise que você vê acima.\n\n#AppReview #Demonstração`,
-                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(), // 2 horas atrás
-                    permalink_url: "https://facebook.com",
-                    reactions: { summary: { total_count: 342 } },
-                    comments: { summary: { total_count: 56 } },
-                    shares: { count: 12 }
+                    id: `1092837465_987654321`,
+                    message: `Hoje compartilhamos os principais destaques da semana com nossa comunidade. Fique por dentro!`,
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
+                    permalink_url: "https://facebook.com/demo",
+                    reactions: { summary: { total_count: 542 } },
+                    comments: { summary: { total_count: 89 } },
+                    shares: { count: 45 }
                 },
                 {
-                    id: `${identifier}_123456789`,
-                    message: `Lançamento de um novo relatório de tendências de mercado. Acesse nosso portal para ler mais detalhes e compartilhe sua opinião nos comentários!\n\nAgradecemos a todos que acompanham nossas publicações.`,
-                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 dias atrás
-                    permalink_url: "https://facebook.com",
+                    id: `1092837465_123456789`,
+                    message: `Confira nosso novo conteúdo publicado nesta manhã. Uma análise aprofundada dos últimos eventos.`,
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+                    permalink_url: "https://facebook.com/demo",
                     reactions: { summary: { total_count: 1205 } },
                     comments: { summary: { total_count: 140 } },
                     shares: { count: 89 }
                 },
                 {
-                    id: `${identifier}_456123789`,
-                    message: null, // Simulando um post que seja apenas uma foto ou vídeo sem legenda
-                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 4).toISOString(), // 4 dias atrás
-                    permalink_url: "https://facebook.com",
-                    reactions: { summary: { total_count: 85 } },
-                    comments: { summary: { total_count: 4 } },
-                    shares: { count: 1 }
+                    id: `1092837465_456123789`,
+                    message: `Obrigado a todos que participaram da nossa atualização mais recente. Seu feedback é muito importante para nós!`,
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+                    permalink_url: "https://facebook.com/demo",
+                    reactions: { summary: { total_count: 850 } },
+                    comments: { summary: { total_count: 124 } },
+                    shares: { count: 32 }
+                },
+                {
+                    id: `1092837465_789123456`,
+                    message: `Amanhã teremos uma transmissão ao vivo especial para discutir os próximos passos do projeto. Não perca!`,
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+                    permalink_url: "https://facebook.com/demo",
+                    reactions: { summary: { total_count: 1560 } },
+                    comments: { summary: { total_count: 320 } },
+                    shares: { count: 150 }
+                },
+                {
+                    id: `1092837465_321654987`,
+                    message: `Lembrando que nossa central de atendimento agora funciona 24h. Conte conosco para qualquer dúvida.`,
+                    created_time: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+                    permalink_url: "https://facebook.com/demo",
+                    reactions: { summary: { total_count: 420 } },
+                    comments: { summary: { total_count: 45 } },
+                    shares: { count: 12 }
                 }
             ];
 
-            processAndRenderData(mockPosts, identifier);
+            processAndRenderData(mockPosts, pageInfo, true);
         }
     </script>
 </body>
